@@ -1,0 +1,56 @@
+1.1 二维线段树
+//建树O(n^2) 查询O（logn ^ 2） 区间查询(x1,y1)×(x2,y2)矩形内元素和
+const int maxn = 1e3 + 10;
+#define lson rt << 1 
+#define rson rt << 1 | 1
+
+ll t[maxn << 2][maxn << 2];
+int n;
+
+void rebuild(int rt, int l, int r, int num){
+    t[num][rt] = 0;
+    if(l == r)return ;
+    int mid = l + r >> 1;
+    rebuild(lson, l, mid, num), rebuild(rson, mid + 1, r, num);
+}
+
+void build(int rt, int l, int r){
+    rebuild(1, 1, n, rt);
+    if(l == r)return;
+    int mid = l + r >> 1;
+    build(lson, l, mid), build(rson, mid + 1, r);
+}
+
+void reupdate(int rt, int l, int r, int y, int num, int d){
+    if(l == r)return void(t[num][rt] += d);
+    int mid = l + r >> 1;
+    if(y <= mid)reupdate(lson, l, mid, y, num, d);
+    else reupdate(rson, mid + 1, r, y, num, d);
+    t[num][rt] = t[num][lson] + t[num][rson];
+}
+
+void update(int rt, int l, int r, int x, int y, int d){
+    reupdate(1, 1, n, y, rt, d);
+    if(l == r)return;
+    int mid = l + r >> 1;
+    if(x <= mid)update(lson, l, mid, x, y, d);
+    else update(rson, mid + 1, r, x, y, d);
+}
+
+ll requery(int rt, int l, int r, int Y1, int Y2, int num){
+    if(Y1 <= l && r <= Y2)return t[num][rt];
+    int mid = l + r >> 1;
+    ll ret = 0;
+    if(Y1 <= mid)ret += requery(lson, l, mid, Y1, Y2, num);
+    if(mid < Y2)ret += requery(rson, mid + 1, r, Y1, Y2, num);
+    return ret;
+}
+
+ll query(int rt, int l, int r, int X1, int Y1, int X2, int Y2){
+    if(X1 <= l && r <= X2)return requery(1, 1, n, Y1, Y2, rt);
+    int mid = l + r >> 1;
+    ll ret = 0;
+    if(X1 <= mid)ret += query(lson, l, mid, X1, Y1, X2, Y2);
+    if(mid < X2)ret += query(rson, mid + 1, r, X1, Y1, X2, Y2);
+    return ret;
+}
