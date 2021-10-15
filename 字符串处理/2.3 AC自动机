@@ -1,0 +1,75 @@
+2.3 AC自动机
+求多个模式串分别在文本串中的出现次数
+
+const int maxn = 2e6 + 10;
+
+int tree[maxn][26], fail[maxn], sum[maxn];
+int in[maxn], mp[maxn];
+int n, len, tot;
+char s[maxn], s1[2 * maxn];
+
+// 插入
+void insert(int k){
+    int rt = 0;
+    for(int i = 1; i <= len; i ++){
+        int a = s1[i] - 'a';
+        if(!tree[rt][a])tree[rt][a] = ++ tot;
+        rt = tree[rt][a];
+    }
+    mp[k] = rt;
+}
+
+// 生成fail指针
+void build(){
+    queue<int> q;
+    for(int i = 0; i < 26; i ++){
+        if(tree[0][i])q.push(tree[0][i]);
+    }
+    while(q.size()){
+        int a = q.front(); q.pop();
+        for(int i = 0; i < 26; i ++){
+            int b = tree[a][i];
+            if(!b){tree[a][i] = tree[fail[a]][i]; continue;}
+            fail[b] = tree[fail[a]][i];
+            q.push(b);
+            in[fail[b]] ++;//拓扑排序入度
+        }
+    }
+}
+
+// 拓扑排序优化
+void topo(){
+    queue<int> q;
+    for(int i = 1; i <= tot; i ++){
+        if(in[i] == 0)q.push(i);
+    }
+    while(q.size()){
+        int a = q.front(); q.pop();
+        int b = fail[a];
+        in[b] --;
+        sum[b] += sum[a];
+        if(in[b] == 0)q.push(b);
+    }
+}
+
+int main(){
+    int t, q, x, y;
+    scanf("%d", &n);
+    for(int i = 1; i <= n; i ++){
+        scanf("%s", s1 + 1);
+        len = strlen(s1 + 1);
+        insert(i);
+    }
+    scanf("%s", s + 1);
+    build();
+    int rt = 0;
+    len = strlen(s + 1);
+    for(int i = 1; i <= len; i ++){
+        int a = s[i] - 'a';
+        rt = tree[rt][a];
+        sum[rt] ++;
+    }
+    topo();
+    for(int i = 1; i <= n; i ++)printf("%d\n", sum[mp[i]]);
+    return 0;
+}
