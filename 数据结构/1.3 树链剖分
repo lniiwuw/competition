@@ -1,0 +1,103 @@
+1.3 树链剖分
+// 树链剖分 ：把一棵树拆成若干个不相交的链，然后用数据结构去维护这些链
+//树链剖分操作：1.对子树所有结点求和 2.对子树所有结点进行更新
+//3.对任意两点间的路径上所有点求和 4.对任意两点间的路径上所有点进行更新
+struct node{
+    int to, next;
+}s[maxn];
+int tree[maxn << 2], lazy[maxn << 2];
+int head[maxn], tot, cnt, w[maxn], mod, n, m, r;
+int son[maxn], fa[maxn], sz[maxn], d[maxn], top[maxn], id[maxn], wt[maxn];
+
+//根据dfs序进行线段树区间求和, 区间修改(子树修改及求和)
+
+void pushdown(int rt, int len){
+    if(lazy[rt]){
+        lazy[lson] += lazy[rt], lazy[rson] += lazy[rt];
+        tree[lson] += lazy[rt] * ((len - (len >> 1)) % mod) % mod;
+        tree[rson] += lazy[rt] * ((len >> 1) % mod) % mod;
+        lazy[lson] %= mod, lazy[rson] %= mod;
+        tree[lson] %= mod, tree[rson] %= mod;
+        lazy[rt] = 0;
+    }
+}
+
+void build(int l, int r, int rt){
+    if(l == r)return void(tree[rt] = wt[l]);
+    int mid = l + r >> 1;
+    build(l, mid, lson), build(mid + 1, r, rson);
+    tree[rt] = (tree[lson] + tree[rson]) % mod;
+}
+
+void update(int l, int r, int L, int R, int rt, int y){
+    if(L <= l && r <= R){
+        lazy[rt] = (lazy[rt] + y) % mod;
+        tree[rt] += y % mod * ((r - l + 1) % mod) % mod;
+        return ;
+    }
+    pushdown(rt, r - l + 1);
+    int mid = l + r >> 1;
+    if(L <= mid)update(l, mid, L, R, lson, y);
+    if(mid < R)update(mid + 1, r, L, R, rson, y);
+    tree[rt] = (tree[lson] + tree[rson]) % mod;
+}
+
+int query(int l, int r, int L, int R, int rt){
+    if(L <= l && r <= R)return tree[rt];
+    pushdown(rt, r - l + 1);
+    int mid = l + r >> 1, ret = 0;
+    if(L <= mid)ret = (ret + query(l, mid, L, R, lson)) % mod;
+    if(mid < R)ret = (ret + query(mid + 1, r, L, R, rson)) % mod;
+    return ret;
+}
+
+//树链剖分(两点间修改及求和)
+
+void dfs1(int u, int pre){// 第一次遍历，找每个点的重儿子
+    // 记录深度、子树大小、父亲结点
+    d[u] = d[pre] + 1, sz[u] = 1, fa[u] = pre;
+    // 记录重儿子子树大小
+    int mson = -1;
+    for(int i = head[u]; ~i; i = s[i].next){
+        int to = s[i].to;
+        if(to == pre)continue;
+        dfs1(to, u);
+        sz[u] += sz[to];
+        if(sz[to] > mson)son[u] = to, mson = sz[to];// 记录每个结点重儿子位置及子树大小
+    }
+}
+
+void dfs2(int u, int pre, int topx){//第二次遍历，生成dfs序，将树剖分为不相关的链
+    id[u] = ++ cnt, wt[cnt] = w[u];
+    top[u] = topx;
+    // 记录dfs序、 每个点所在链的顶端结点
+    if(!son[u])return ;
+    dfs2(son[u], u, topx);
+    for(int i = head[u]; ~i; i = s[i].next){
+        int to = s[i].to;
+        if(to == pre || to == son[u])continue;
+        dfs2(to, u, to);// 轻儿子，存在一条从轻儿子开始的链，顶端结点为本身
+    }
+}
+
+int qlink(int a, int b){// 两点间查询
+    int ret = 0;
+    while(top[a] != top[b]){// 当两点不在一条链上
+        if(d[top[a]] < d[top[b]])swap(a, b);// 把a变为深度大的那一点, 再求链上的权值和
+        ret = (ret + query(1, n, id[top[a]], id[a], 1)) % mod;// 对[a的顶端结点, a]求和
+        a = fa[top[a]];// a变为a的顶端结点的父节点
+    }
+    if(d[a] < d[b])swap(a, b);// 属于同一条链, 直接求和
+    ret = (ret + query(1, n, id[b], id[a], 1)) % mod;
+    return ret;
+}
+
+void uplink(int a, int b, int y){// 两点间更新
+    while(top[a] != top[b]){
+        if(d[top[a]] < d[top[b]])swap(a, b);
+        update(1, n, id[top[a]], id[a], 1, y);
+        a = fa[top[a]];
+    }
+    if(d[a] < d[b])swap(a, b);
+    update(1, n, id[b], id[a], 1, y);
+}
