@@ -1,0 +1,75 @@
+1.6 可持久化线段树(主席树)
+可持久性线段树（主席树）
+可持久化线段树模板：求静态区间[l,r]第k大，
+求区间第k大，需离散化处理，然后不断更新得到不同版本的线段树，
+然后将r版本的线段树减去l-1版本的线段树得到另一线段树，在此线段树上求区间第k大
+
+const int maxn = 1e5 + 10;
+struct  node{
+    int l, r, v;
+}t[maxn << 5];
+int s[maxn], a[maxn], n, m, root[maxn], tot;
+
+// 建树
+int bulid(int l, int r){
+    //新建结点
+    int rt = ++ tot;
+    t[rt].v = 0;
+
+    if(l == r)return rt;
+    int mid = l + r >> 1;
+    // 左右儿子序号
+    t[rt].l = bulid(l, mid), t[rt].r = bulid(mid + 1, r);
+    
+    return rt;
+}
+
+// 更新线段树版本，最后返回更新后的当前版本的根结点序号（单点更新）
+int update(int node, int l, int r, int pos){
+    // 线段树更新时，在当前需更新位置新建结点，初始时新建左右儿子不变，值加1
+    int rt = ++ tot;
+    t[rt] = t[node], t[rt].v ++;
+    
+    if(l == r)return rt;//更新结束
+
+    int mid = l + r >> 1;
+    //若更新位置在左边区间，则左儿子变化（否则右儿子变化）
+    if(pos <= mid)t[rt].l = update(t[rt].l, l, mid, pos);
+    else t[rt].r = update(t[rt].r, mid + 1, r, pos);
+
+    return rt;
+}
+
+//查询区间[a + 1, b]第k大
+int query(int a, int b, int l, int r, int k){
+    if(l == r)return l;
+    // 对当前区间[l, r]，求[l, l + r >> 1]内元素个数
+    int sum = t[t[b].l].v - t[t[a].l].v, mid = l + r >> 1;
+    //若k小于sum，则第k大在左边区间内，否则在右边区间[l + r >> 1 + 1, r]上找第k - sum大元素
+    if(sum >= k)return query(t[a].l, t[b].l, l, mid, k);
+    else return query(t[a].r, t[b].r, mid + 1, r, k - sum);
+}   
+
+void init(){
+    scanf("%d%d", &n, &m);
+    for(int i = 1; i <= n; i ++)scanf("%d", &s[i]), a[i] = s[i];
+    //离散化
+    sort(s + 1, s + n + 1);
+    int q = unique(s + 1, s + n + 1) - s - 1;
+    
+    root[0] = bulid(1, q);
+    
+    for(int i = 1; i <= n; i ++){
+        int pos = lower_bound(s + 1, s + q + 1, a[i]) - s;
+        //在前一版本线段树上更新，得到当前版本的根结点序号
+        root[i] = update(root[i - 1], 1, q, pos);
+    }
+   
+    while(m --){
+        int l, r, k;
+        scanf("%d%d%d", &l, &r, &k);
+        //区间[l,r]第k大元素在离散化数组下标
+        int id = query(root[l - 1], root[r], 1, q, k);
+        printf("%d\n", s[id]);
+    }
+}
