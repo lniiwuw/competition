@@ -1,0 +1,38 @@
+4.4 染色法判断二分图
+
+const int maxn = 1e5 + 10;
+struct node{
+    int to, next;
+}s[maxn];
+int n, m, tot, head[maxn];
+int c[maxn];
+
+void add(int u, int v){
+    s[++ tot].to = v;
+    s[tot].next = head[u];
+    head[u] = tot;
+}
+
+bool dfs(int a, int b){
+    c[a] = b;
+    for(int i = head[a]; ~i; i = s[i].next){
+        int to = s[i].to;
+        if(c[to] == b)return false;
+        if(c[to] == 0 && !dfs(to, -b))return false;
+    }
+    return true;
+}
+
+bool init(){
+    memset(c, 0, sizeof c);
+    memset(head, -1, sizeof head);
+    scanf("%d%d", &n, &m);
+    for(int i = 1; i <= m; i ++){
+        int a, b;
+        scanf("%d%d", &a, &b);
+        add(a, b), add(b, a);
+    }    
+    int flag = dfs(1, 1);
+    if(n & 1)flag = false;
+    return flag;//true为真
+}
