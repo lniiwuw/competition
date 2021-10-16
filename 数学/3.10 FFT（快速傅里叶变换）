@@ -1,0 +1,101 @@
+3.10 FFT（快速傅里叶变换）
+
+n次多项式F(x)与m次多项式G(x)的卷积
+struct Complex{
+    double x, y;
+    Complex(double _x = 0.0, double _y = 0.0){
+        x = _x, y = _y;
+    }
+    Complex operator +(const Complex &a)const{
+        return Complex(x + a.x, y + a.y);
+    }
+    Complex operator -(const Complex &a)const{
+        return Complex(x - a.x, y - a.y);
+    }
+    Complex operator *(const Complex &a)const{
+        return Complex(x * a.x - y * a.y, x * a.y + y * a.x);
+    }
+};
+
+int rev[maxn];
+// 同样需要保证 len 是 2 的幂
+// 记 rev[i] 为 i 翻转后的值 O(n)
+void change(Complex y[], int len){
+    for(int i = 0; i < len; i ++){
+        rev[i] = rev[i >> 1] >> 1;
+        // 如果最后一位是 1，则翻转成 len/2
+        if(i & 1)rev[i] |= len >> 1;
+    }
+    for(int i = 0; i < len; i ++){
+        // 保证每对数只翻转一次
+        if(i < rev[i])swap(y[i], y[rev[i]]);
+    }
+}
+
+/*
+两个版本的位逆序变换
+进行 FFT 和 IFFT 前的反置变换
+位置 i 和 i 的二进制反转后的位置互换
+len 必须为 2 的幂 O(nlogn)
+void change(Complex y[], int len) {
+  int i, j, k;
+  for (int i = 1, j = len / 2; i < len - 1; i++) {
+    if (i < j) swap(y[i], y[j]);
+    // 交换互为小标反转的元素，i<j 保证交换一次
+    // i 做正常的 + 1，j 做反转类型的 + 1，始终保持 i 和 j 是反转的
+    k = len / 2;
+    while (j >= k) {
+      j = j - k;
+      k = k / 2;
+    }
+    if (j < k) j += k;
+  }
+}
+*/
+
+// 做 FFT，len 必须是 2^k 形式
+//on == 1 时是 DFT，on == -1 时是 IDFT
+void fft(Complex y[], int len, int on){
+    change(y, len);
+    for(int h = 1; h <= len; h <<= 1){
+        Complex wn = Complex(cos(2 * pi / h), sin(on * 2 * pi / h));
+        for(int i = 0; i < len; i += h){
+            Complex w = Complex(1, 0);
+            for(int k = i; k < i + h/2; k ++){
+                Complex u = y[k];
+                Complex t = w * y[k + h/2];
+                y[k] = u + t;
+                y[k + h/2] = u - t;
+                w = w * wn;
+            }
+        }
+    }
+
+    if(on == -1){
+        for(int i = 0; i < len; i ++)y[i].x /= len;
+    }
+}
+
+Complex x1[maxn], x2[maxn];
+int sum[maxn];
+int n, m, a[maxn], b[maxn];
+
+int main(){
+    scanf("%d%d",&n,&m);
+	for(int i = 0; i <= n; i ++)scanf("%d", &a[i]);//F(x)的i次项系数
+	for(int i = 0; i <= m; i ++)scanf("%d", &b[i]);//G(x)的i次项系数
+	int len = 1, maxx = max(n, m);
+	while(len < (maxx << 1)) len <<= 1;
+    for(int i = 0; i <= n; i ++)x1[i] = Complex(a[i], 0);
+    for(int i = n + 1; i < len; i ++)x1[i] = Complex(0, 0);
+    for(int i = 0; i <= m; i ++)x2[i] = Complex(b[i], 0);
+    for(int i = m + 1; i < len; i ++)x2[i] = Complex(0, 0);
+	fft(x1,len,1);
+	fft(x2,len,1);
+	for(int i = 0; i < len; i ++)x1[i] = x1[i]*x2[i];
+	fft(x1,len,-1);		
+    for(int i = 0; i < len; i ++)sum[i] = x1[i].x + 0.5;
+    //F(x)与G(x)卷积的i次项系数
+	for(int i = 0; i <= n + m; i ++)printf("%d ", sum[i]);
+    return 0;
+}
