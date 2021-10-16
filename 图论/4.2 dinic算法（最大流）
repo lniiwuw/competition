@@ -1,0 +1,64 @@
+4.2 dinic算法（最大流）
+
+时间复杂度O(n^2 * m)
+#define ll long long 
+const ll INF = 0x3f3f3f3f3f3f3f3f;
+const int maxn = 1e5 + 10;
+
+struct node{
+    int to, next, w;
+}e[maxn];
+int head[maxn], tot = -1;
+int n, m, dep[maxn], s, t, q[maxn];
+
+void add(int u, int v, int w){
+    e[++ tot].to = v;
+    e[tot].next = head[u];
+    e[tot].w = w;
+    head[u] = tot;
+}
+
+bool bfs(){
+    memset(dep, 0, (n + 1) * sizeof(int));
+    int hh = 0, tt = -1;
+    q[++ tt] = s, dep[s] = 1;
+    while(hh <= tt){
+        int u = q[hh ++];
+        for(int i = head[u]; ~i; i = e[i].next){
+            int to = e[i].to;
+            if(e[i].w && !dep[to])dep[to] = dep[u] + 1, q[++ tt] = to;
+        }
+    }
+    return dep[t];
+}
+
+ll dfs(int u, ll in){
+    if(u == t)return in;
+    ll out = 0;
+    for(int i = head[u]; ~i; i = e[i].next){
+        int to = e[i].to;
+        if(e[i].w && dep[to] == dep[u] + 1){
+            int ret = dfs(to, min(in, 1ll * e[i].w));
+            e[i].w -= ret, e[i ^ 1].w += ret;
+            in -= ret, out += ret;
+        }
+    }
+    if(out == 0)dep[u] = 0;
+    return out;
+}
+
+int main(){
+    memset(head, -1, sizeof head);
+    scanf("%d%d%d%d", &n, &m, &s, &t);
+    // 源点到汇点的最大流
+    int a, b, c;
+    while(m --){
+        // 存在a -> b的边
+        scanf("%d%d%d", &a, &b, &c);
+        add(a, b, c), add(b, a, 0);
+    }
+    ll ans = 0;
+    while(bfs())ans += dfs(s, 1e18);
+    printf("%lld\n", ans);
+    return 0;
+}
