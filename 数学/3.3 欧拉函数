@@ -1,0 +1,32 @@
+3.3 欧拉函数
+
+n的欧拉函数值
+int oula(int n){
+    int ans = n;
+    for(int i = 2; 1ll * i * i <= n; i ++){
+      if(n % i == 0){
+      ans -= ans/i;
+      while(n % i == 0)n /= i;
+      }
+    }
+    if(n != 1)ans -= ans/n;
+	return ans;
+}
+
+
+线性筛求欧拉函数 O(n)
+void getoula(){
+    memset(vis, 1, sizeof vis);
+    vis[1] = 0, sum[1] = 1;
+    for(int i = 2; i <= maxn; i ++){
+        if(vis[i])p[++ tot] = i, sum[i] = i - 1;//存欧拉函数值
+        for(int j = 1; j <= tot && i * p[j] <= maxn; j ++){
+            vis[i * p[j]] = 0;
+            if(i % p[j] == 0){
+                sum[i * p[j]] = p[j] * sum[i];
+                break;
+            }
+            sum[i * p[j]] = (p[j] - 1) * sum[i];
+        }
+    }
+}
