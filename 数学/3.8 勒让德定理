@@ -1,0 +1,8 @@
+3.8 勒让德定理
+
+求阶乘质数因子的幂次数
+int cal(int n,int p){
+    if(n==0)//n为0时退出
+        return 0;
+    return n / p + cal(n / p, p);
+}
