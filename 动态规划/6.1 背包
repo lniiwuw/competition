@@ -1,0 +1,206 @@
+6.1 背包
+
+01背包：每件物品最多取一次使价值最大
+n: 物品个数 v：背包容积
+const int maxn = 1e4 + 10;
+int dp[maxn], s[maxn][2], n, v;
+
+int init(){
+    cin >> n >> v;
+    // 每件物品的容积和价值
+    for(int i = 1; i <= n; i ++)cin >> s[i][0] >> s[i][1];
+    /*for(int i = 1; i <= n; i ++){
+        for(int j = 0; j <= v; j ++){
+            dp[i][j] = dp[i - 1][j];
+            if(j >= s[i][0])dp[i][j] = max(dp[i][j], dp[i - 1][j - s[i][0]] + s[i][1]);
+        }
+    }
+    cout << dp[n][v] << endl;
+    */
+    for(int i = 1; i <= n; i ++){
+        for(int j = v; j >= s[i][0]; j --){
+            dp[j] = max(dp[j], dp[j - s[i][0]] + s[i][1]);
+        }
+    }
+    return dp[v];
+}
+
+完全背包：每件物品取任意多次使价值最大
+n: 物品个数 v：背包容积
+const int maxn = 1e4 + 10;
+int dp[maxn], s[maxn][2], n, v;
+
+int init(){
+    cin >> n >> v;
+    for(int i = 1; i <= n; i ++)cin >> s[i][0] >> s[i][1];
+    /*for(int i = 1; i <= n; i ++){
+        for(int j = 0; j <= v; j ++){
+            dp[i][j] = dp[i - 1][j];
+            if(j >= s[i][0])dp[i][j] = max(dp[i][j - s[i][0]] + s[i][1], dp[i][j]); 
+        }
+    }*/
+    for(int i = 1; i <= n; i ++){
+        for(int j = s[i][0]; j <= v; j ++){
+            dp[j] = max(dp[j], dp[j - s[i][0]] + s[i][1]);
+        }
+    }
+    return dp[v];
+}
+
+多重背包：每件物品最多取c次，使总价值最大
+
+二进制优化：
+const int maxn = 1e4 + 10;
+int dp[maxn], s[maxn][2];
+
+int main(){
+    int n, v;
+    cin >> n >> v;
+    for(int i = 1; i <= n; i ++){
+        int a, b, c, d = 1, t = 0;
+        // 物品最多取c次
+        cin >> a >> b >> c;
+        while(d <= c){
+            s[++ t][0] = d * a, s[t][1] = d * b;
+            c -= d;
+            d *= 2;
+        }
+        if(c)s[++ t][0] = c * a, s[t][1] = c * b;
+        for(int j = 1; j <= t; j ++){
+            for(int k = v; k >= s[j][0]; k --){
+                dp[k] = max(dp[k], dp[k - s[j][0]] + s[j][1]);
+            }
+        }
+    }
+    return dp[v];
+}
+
+优先队列优化：
+O(NV)
+const int maxn = 2e4 + 10;
+int dp[maxn], pre[maxn], q[maxn];
+
+// pre[q[hh]] - (q[hh] - j)/v1 * w1 + (k - j)/v1 * w1) = pre[q[hh]] + (k - q[hh])/v1 *w1
+
+int init(){
+    int n, v;
+    cin >> n >> v;
+    for(int i = 1; i <= n; i ++){
+        int v1, w1, s1;
+        cin >> v1 >> w1 >> s1;
+        
+        for(int j = 0; j < v1; j ++){
+            int hh = 0, tt = -1;
+            memcpy(pre, dp, sizeof dp);
+            
+            for(int k = j; k <= v; k += v1){
+                
+                while(hh <= tt && k - q[hh] > s1 * v1)hh ++;
+                while(hh <= tt && pre[q[tt]] - (q[tt] - j)/v1 * w1 <= pre[k] - (k - j)/v1 * w1)tt --;
+                if(hh <= tt)dp[k] = max(dp[k], pre[q[hh]] + (k - q[hh])/v1 * w1);
+                
+                q[++ tt] = k;
+            }
+        }
+    }
+    return dp[v];
+}
+
+二维费用背包：
+每件物品有对应体积和重量，最多使用一次，使总价值最大
+v：背包容积 w：背包承受重量
+n：物品件数 
+v1：物品对应体积 m1：对应重量 w1：对应价值
+typedef long long ll;
+const int maxn = 1e3 + 10;
+
+ll read(){
+    ll q = 0, w = 1;char ch = ' ';
+    while(ch != '-' && (ch < '0' || ch > '9'))ch = getchar();
+    if(ch == '-')w = -1, ch = getchar();
+    while(ch >= '0' && ch <= '9')q = q * 10 + (ll)(ch - '0'),ch = getchar();
+    return q * w;
+}
+
+int dp[maxn][maxn];
+int n, v, m;
+
+int init(){
+    n = read(), v = read(), m = read(); 
+    int v1, m1, w1;
+    for(int i = 1; i <= n; i ++){
+        v1 = read(), m1 = read(), w1 = read();
+        for(int j = v; j >= v1; j --){
+            for(int k = m; k >= m1; k --){
+                dp[j][k] = max(dp[j][k], dp[j - v1][k - m1] + w1);
+            }
+        }
+    }
+    return dp[v][m];
+}
+
+分组背包：
+有n组物品，同一组内只能选一个，使总价值最大
+v：背包容积 n：物品组数 
+const int N = 110;
+int dp[N][N], s[N], v1[N][N], w[N][N];
+
+int init(){
+    int n, v;
+    cin >> n >> v;
+    for(int i = 1; i <= n; i ++){
+        cin >> s[i];
+        for(int j = 1; j <= s[i]; j ++)cin >> v1[i][j] >> w[i][j];
+    }
+    for(int i = 1; i <= n; i ++){
+        for(int j = 0; j <= v; j ++){
+            dp[i][j] = dp[i - 1][j];// 此层循环必须在外, 保证每组中最多放一个
+            for(int k = 1; k <= s[i]; k ++){
+                if(j >= v1[i][k])dp[i][j] = max(dp[i][j], dp[i - 1][j - v1[i][k]] + w[i][k]);
+            }
+        }
+    }
+    return dp[n][m];
+}
+
+01背包求方案数：
+
+const int mod = 1e9 + 7;
+const int maxn = 1e3 + 10;
+int cnt[maxn], s[maxn][2], f[maxn];
+
+int init(){
+    int n, v;
+    cin >> n >> v;
+    for(int i = 1; i <= n; i ++)cin >> s[i][0] >> s[i][1];
+    for(int i = 0; i <= v; i ++)cnt[i] = 1;
+    for(int i = 1; i <= n; i ++){
+        for(int j = v; j >= s[i][0]; j --){
+            int v1 = f[j - s[i][0]] + s[i][1];
+            if(v1 > f[j])f[j] = v1, cnt[j] = cnt[j - s[i][0]];
+            else if(v1 == f[j])cnt[j] = (cnt[j] + cnt[j - s[i][0]]) % mod;
+        }
+    }
+    return cnt[v] % mod;   
+}
+
+01背包求具体方案：
+总价值最大且字典序最小的方案
+
+const int N = 1100;
+int dp[N][N], n, v, s[N][2];
+
+void init(){
+    cin >> n >> v;
+    for(int i = 1; i <= n; i ++)cin >> s[i][0] >> s[i][1];
+    for(int i = n; i >= 1; i --){
+        for(int j = 0; j <= v; j ++){
+            dp[i][j] = dp[i + 1][j];
+            if(j >= s[i][0])dp[i][j] = max(dp[i][j], dp[i + 1][j - s[i][0]] + s[i][1]);
+        }
+    }
+    int m = v;
+    for(int i = 1; i <= n; i ++){
+        if(m >= s[i][0] && dp[i][m] == dp[i + 1][m - s[i][0]] + s[i][1])cout << i << " ", m -= s[i][0];
+    }
+}
