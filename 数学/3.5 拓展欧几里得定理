@@ -1,4 +1,4 @@
-3.4 拓展欧几里得定理
+3.5 拓展欧几里得定理
 求一组x, y 使得 ax + by = gcd(a, b)
 
 void exgcd(int a, int b, int &x, int &y){
