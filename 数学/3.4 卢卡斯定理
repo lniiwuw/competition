@@ -1,0 +1,28 @@
+3.4 卢卡斯定理
+若p是质数，则对于任意整数 1 <= m <= n，有：
+C(n, m) = C(n % p, m % p) * C(n / p, m / p) (mod p)
+
+#define ll long long
+int f[maxn];
+
+void init(ll p){
+    f[1] = f[0] = 1;
+    for(int i = 2; i <= 100000; i ++)f[i] = f[i - 1] * i % p;
+}
+
+ll qpow(ll a, ll b, ll p){
+    ll ret = 1;
+    while(b){
+        if(b & 1)ret = ret * a % p;
+        b >>= 1;
+        a = a * a % p;
+    }
+    return ret % p;
+}
+ll C(ll a, ll b, ll p){
+    return (f[a] * qpow(f[b], p - 2, p) % p * qpow(f[a - b], p - 2, p) % p) % p;
+}
+ll lucas(ll a, ll b, ll p){
+    if(a < p && b < p)return C(a, b, p);
+    return C(a % p, b % p, p) % p * lucas(a / p, b / p, p) % p;
+}
