@@ -1,0 +1,29 @@
+3.2 线性基
+线性基三大性质：
+1.原序列里面的任意一个数都可以由线性基里面的一些数异或得到
+2.线性基里面的任意一些数异或起来都不能得到0
+3.线性基里面的数的个数唯一，并且在保持性质一的前提下，数的个数是最少的
+
+ll s[maxn], n, p[maxn];
+
+//求集合s的线性基，数组p存放集合s的线性基
+void solvex(){
+    for(int i = 1; i <= n; i ++){
+        ll a = s[i];
+        for(int j = 60; j >= 0; j --){
+            if(a & (1ll << j)){
+                if(!p[j]){p[j] = a; break;}
+                else a ^= p[j];
+            }
+        }
+    }
+}
+
+// 求集合s异或最大值
+ll solvemaxx(){
+    ll ans = 0;
+    for(int i = 60; i >= 0; i --){
+        if((ans ^ p[i]) > ans) ans = ans ^ p[i];
+    }
+    return ans;
+}
