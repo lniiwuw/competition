@@ -1,0 +1,216 @@
+3.1 求逆元
+
+1.费马小定理,a的逆元为a的mod-2次方，条件：mod为质数，且mod与a互质
+
+const int mod = 1e9 + 7;
+ll qpow(ll a,ll b){
+    ll ret = 1;
+    while(b){
+        if(b&1)//奇数
+            ret = (ret * a) % mod;
+        b >>= 1;
+        a = (a * a) % mod;
+    }
+    return ret;
+}
+
+2.拓展欧几里得定理，条件：n与mod互质，但mod可以不为质数
+
+void exgcd(ll a,ll b,ll &x,ll &y){
+    if(b==0){
+        x = 1, y = 0;
+        return;
+    }
+    exgcd(b, a % b, x, y);
+    ll t = x;
+    x = y;
+    y = t - a / b * y;
+}
+
+ll Inv(ll n) {
+    ll x, y;
+    exgcd(n, mod, x, y);
+    x = (x + mod) % mod;
+    return x;//n的逆元
+}
+
+3.线性递推求1~n逆元
+由k*i+r=p(mod p)推出inv[i]=-(mod/i)*inv[mod%i]%mod;
+
+void Inv(int n){
+    int inv[100000];
+    inv[1] = 1;
+    for (int i = 2; i < mod; ++i)
+    inv[i] = (mod - mod / i) * inv[mod % i] % mod;//保证为正数 
+}
+
+4.求阶乘逆元
+inv[i+1]为(i+1)!的逆元，由inv[i+1]*(i+1)=inv[i]
+
+void Inv(int n){
+    int inv[10000];
+    int k;
+    inv[n+1] = k;//n!的逆元，可由费马小定理求得
+    for (int i = n; i >= 1;i--)
+        inv[i] = inv[i + 1] * (i + 1);
+}
+
+
+3.2 线性基
+线性基三大性质：
+线性基异或形成的集合与原数集异或形成的集合相同
+1.原序列里面的任意一个数都可以由线性基里面的一些数异或得到
+2.线性基里面的任意一些数异或起来都不能得到0
+3.线性基里面的数的个数唯一，并且在保持性质一的前提下，数的个数是最少的
+
+ll s[maxn], n, p[maxn];
+
+//求集合s的线性基，数组p存放集合s的线性基
+void solvex(){
+    for(int i = 1; i <= n; i ++){
+        ll a = s[i];
+        for(int j = 60; j >= 0; j --){
+            if(a & (1ll << j)){
+                if(!p[j]){p[j] = a; break;}
+                else a ^= p[j];
+            }
+        }
+    }
+}
+
+// 求集合s异或最大值
+ll solvemaxx(){
+    ll ans = 0;
+    for(int i = 60; i >= 0; i --){
+        if((ans ^ p[i]) > ans) ans = ans ^ p[i];
+    }
+    return ans;
+}
+
+
+3.3 欧拉函数
+
+n的欧拉函数值
+int oula(int n){
+    int ans = n;
+    for(int i = 2; 1ll * i * i <= n; i ++){
+      if(n % i == 0){
+      ans -= ans/i;
+      while(n % i == 0)n /= i;
+      }
+    }
+    if(n != 1)ans -= ans/n;
+	return ans;
+}
+
+
+线性筛求欧拉函数 O(n)
+void getoula(){
+    memset(vis, 1, sizeof vis);
+    vis[1] = 0, sum[1] = 1;
+    for(int i = 2; i <= maxn; i ++){
+        if(vis[i])p[++ tot] = i, sum[i] = i - 1;//存欧拉函数值
+        for(int j = 1; j <= tot && i * p[j] <= maxn; j ++){
+            vis[i * p[j]] = 0;
+            if(i % p[j] == 0){
+                sum[i * p[j]] = p[j] * sum[i];
+                break;
+            }
+            sum[i * p[j]] = (p[j] - 1) * sum[i];
+        }
+    }
+}
+
+
+3.5 拓展欧几里得定理
+求一组x, y 使得 ax + by = gcd(a, b)
+
+void exgcd(int a, int b, int &x, int &y){
+    if(b == 0){
+        x = 1, y = 0;
+        return ;
+    }
+    exgcd(b, a % b, x, y);
+    int  t = x;
+    x = y;
+    y = t - a / b * y;
+}
+
+
+3.6  Pollard Rho算法+Miller-Rabin素数测试
+
+Miller-Rabin素数测试：
+快速判断一个1e18范围内的数是否为素数，对其进行Miller-Rabin素数测试;
+可以大概率判断其是否为素数，出错的概率为1/4的k次方，k为测试次数。故当测试次数越多，其出错概率越小。
+Pollard Rho算法：大数分解
+
+寻找n最大的质因子(n<1e18)：
+
+ll n, m, ans;
+
+ll gcd(ll a, ll b){return b == 0 ? a : gcd(b, a % b);}
+
+ll qmul(ll a, ll b, ll p){//快速乘
+    ll z = (long double)a / p * b;
+    ll ret = (ull)a * b - (ull)z * p;
+    return (ret + p) % p;
+}
+
+ll qpow(ll a, ll b, ll p){//快速幂
+    ll ret = 1;
+    while(b){
+        if(b & 1)ret = qmul(ret , a , p);
+        b >>= 1;
+        a = qmul(a, a, p);
+    }
+    return ret;
+}
+
+bool Miller_rabin(ll n){// Miller _ Rabin判断素数
+    if(n == 2)return true;
+    if(n < 2 || !(n & 1))return false;//特判
+    ll m = n - 1, k = 0;
+    while(!(m & 1))m >>= 1, k ++;// 求得2的幂次数
+    for(int i = 1; i <= 6; i ++){// 测试次数
+        ll a = rand() % (n - 1) + 1;// 随机生成a
+        ll x = qpow(a, m, n), y;
+        for(int j = 1; j <= k; j ++){
+            y = qmul(x, x, n);
+            if(y == 1 && x != 1 && x != n - 1)return false;
+            // a ^ 2 = 1(mod p), p为质数，若a不为 1或者 n - 1， 则不符合二次探测定理
+            x = y;
+        }
+        if(y != 1)return false;// 费马小定理的逆命题判断
+    }
+    return true;
+}
+
+ll Pollard_Rho(ll n){// 二次优化，减少了gcd的计算次数
+    ll z, x, y, g, c;
+    while(1){// 一定会找到一个因子
+        int i = 0, j = 1;
+        c = rand() % (n - 1) + 1;
+        y = x = rand() % (n - 1) + 1;// 随机初始化
+        z = 1;// 存 abs(x - y)的乘积
+        while(++ i){
+            x = (qmul(x, x, n) + c) % n;// x ^ 2 + c
+            z = qmul(z, abs(x - y), n);
+            if(!z || x == y)break; // z = 0时重新测试， x == y时即为跑完了环，也重新测试
+            if(i == j || i % 127 == 0){// 当i == j 或者 i % 127 = 0 时，判断gcd
+                g = gcd(n, z);
+                if(g > 1)return g;// 找到了一个因子
+                if(i == j)j <<= 1, y = x; // 倍增维护答案准确性
+            }
+        } 
+    }
+}
+
+void pr(ll n){
+    if(n <= ans)return; // 剪枝
+    if(Miller_rabin(n)){ans = n; return ;}
+    ll a = Pollard_Rho(n);
+    while(n % a == 0)n /= a;
+    pr(a), pr(n); // 继续分解
+}
+
+
