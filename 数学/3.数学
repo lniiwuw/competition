@@ -214,3 +214,40 @@ void pr(ll n){
 }
 
 
+3.7 卡特兰数
+
+给定n个0和n个1，它们按照某种顺序排成长度为2n的序列，满足任意前缀中0的个数都不少于1的个数的序列的数量为：
+Cat(n) = C(2n, n) / (n + 1)
+
+
+3.8 勒让德定理
+
+求阶乘质数因子的幂次数
+int cal(int n,int p){
+    if(n==0)//n为0时退出
+        return 0;
+    return n / p + cal(n / p, p);
+}
+
+
+3.9 数论分块
+
+一维数论分块
+int init(){
+  int ans = 0;
+    for(int l = 1, r; l <= n; l = r + 1){
+        r = n/(n/l);
+        ans += (n/l) * (r - l + 1); 
+    }
+    return ans;
+}
+
+二维数论分块
+int init(){
+    int ans = 0;
+    for(int l = 1, r; l <= min(n, m); l = r + 1){
+        r = min(n/(n/l), m/(m/l));
+        ans += (n/l) * (m/l) * (r - l + 1); 
+    }
+    return ans;
+}
