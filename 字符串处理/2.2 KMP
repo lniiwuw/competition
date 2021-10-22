@@ -1,4 +1,4 @@
-1.2 KMP
+2.2 KMP
 
 //求给定子串p的next数组，记录前后缀相等的长度
 void getnext(){
