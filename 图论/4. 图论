@@ -1,0 +1,213 @@
+4. 图论
+
+4.1 spfa算法
+
+求最短路
+时间复杂度 平均情况下 O(m)，最坏情况下 O(nm), n 表示点数，m 表示边数
+int n; // 总点数
+int h[N], w[N], e[N], ne[N], idx;  // 邻接表存储所有边
+int dist[N];   // 存储每个点到1号点的最短距离
+bool st[N];    // 存储每个点是否在队列中
+
+// 求1号点到n号点的最短路距离，如果从1号点无法走到n号点则返回-1
+int spfa(){
+    memset(dist, 0x3f, sizeof dist);
+    dist[1] = 0;
+
+    queue<int> q;
+    q.push(1);
+    st[1] = true;
+
+    while (q.size()){
+        auto t = q.front();
+        q.pop();
+        st[t] = false;
+        for (int i = h[t]; i != -1; i = ne[i]){
+            int j = e[i];
+            if (dist[j] > dist[t] + w[i]){
+                dist[j] = dist[t] + w[i];
+                // 如果队列中已存在j，则不需要将j重复插入
+                if (!st[j]) {
+                    q.push(j);
+                    st[j] = true;
+                }
+            }
+        }
+    }
+
+    if (dist[n] == 0x3f3f3f3f) return -1;
+    return dist[n];
+}
+
+spfa判负环
+int n;  // 总点数
+int h[N], w[N], e[N], ne[N], idx;  // 邻接表存储所有边
+int dist[N], cnt[N];  // dist[x]存储1号点到x的最短距离，cnt[x]存储1到x的最短路中经过的点数
+bool st[N]; // 存储每个点是否在队列中
+// 如果存在负环，则返回true，否则返回false。
+bool spfa(){
+    // 不需要初始化dist数组
+    // 原理：如果某条最短路径上有n个点（除了自己），那么加上自己之后一共有n+1个点，由抽屉原理一定有两个点相同，所以存在环。
+    queue<int> q;
+    for (int i = 1; i <= n; i ++ ){
+        q.push(i);
+        st[i] = true;
+    }
+    while (q.size()){
+        auto t = q.front();
+        q.pop();
+        st[t] = false;
+        for (int i = h[t]; i != -1; i = ne[i]){
+            int j = e[i];
+            if (dist[j] > dist[t] + w[i]) {
+                dist[j] = dist[t] + w[i];
+                cnt[j] = cnt[t] + 1;
+                // 如果从1号点到x的最短路中包含至少n个点（不包括自己），则说明存在环
+                if (cnt[j] >= n) return true;      
+                if (!st[j]){
+                    q.push(j);
+                    st[j] = true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+
+4.2 dinic算法（最大流）
+
+时间复杂度O(n^2 * m)
+#define ll long long 
+const ll INF = 0x3f3f3f3f3f3f3f3f;
+const int maxn = 1e5 + 10;
+
+struct node{
+    int to, next, w;
+}e[maxn];
+int head[maxn], tot = -1;
+int n, m, dep[maxn], s, t, q[maxn];
+
+void add(int u, int v, int w){
+    e[++ tot].to = v;
+    e[tot].next = head[u];
+    e[tot].w = w;
+    head[u] = tot;
+}
+
+bool bfs(){
+    memset(dep, 0, (n + 1) * sizeof(int));
+    int hh = 0, tt = -1;
+    q[++ tt] = s, dep[s] = 1;
+    while(hh <= tt){
+        int u = q[hh ++];
+        for(int i = head[u]; ~i; i = e[i].next){
+            int to = e[i].to;
+            if(e[i].w && !dep[to])dep[to] = dep[u] + 1, q[++ tt] = to;
+        }
+    }
+    return dep[t];
+}
+
+ll dfs(int u, ll in){
+    if(u == t)return in;
+    ll out = 0;
+    for(int i = head[u]; ~i; i = e[i].next){
+        int to = e[i].to;
+        if(e[i].w && dep[to] == dep[u] + 1){
+            int ret = dfs(to, min(in, 1ll * e[i].w));
+            e[i].w -= ret, e[i ^ 1].w += ret;
+            in -= ret, out += ret;
+        }
+    }
+    if(out == 0)dep[u] = 0;
+    return out;
+}
+
+int main(){
+    memset(head, -1, sizeof head);
+    scanf("%d%d%d%d", &n, &m, &s, &t);
+    // 源点到汇点的最大流
+    int a, b, c;
+    while(m --){
+        // 存在a -> b的边
+        scanf("%d%d%d", &a, &b, &c);
+        add(a, b, c), add(b, a, 0);
+    }
+    ll ans = 0;
+    while(bfs())ans += dfs(s, 1e18);
+    printf("%lld\n", ans);
+    return 0;
+}
+
+
+4.3 匈牙利算法
+求二分图最大匹配
+
+int n1, n2;  // n1表示第一个集合中的点数，n2表示第二个集合中的点数
+// 邻接表存储所有边，匈牙利算法中只会用到从第一个集合指向第二个集合的边，所以这里只用存一个方向的边
+int h[N], e[M], ne[M], idx; 
+int match[N];  // 存储第二个集合中的每个点当前匹配的第一个集合中的点是哪个
+bool st[N];    // 表示第二个集合中的每个点是否已经被遍历过
+bool find(int x){
+    for (int i = h[x]; i != -1; i = ne[i]){
+        int j = e[i];
+        if (!st[j]){
+            st[j] = true;
+            if (match[j] == 0 || find(match[j])){
+                match[j] = x;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+// 求最大匹配数，依次枚举第一个集合中的每个点能否匹配第二个集合中的点
+int res = 0;
+for (int i = 1; i <= n1; i ++ ){
+    memset(st, false, sizeof st);
+    if (find(i)) res ++ ;
+}
+
+
+4.4 染色法判断二分图
+
+const int maxn = 1e5 + 10;
+struct node{
+    int to, next;
+}s[maxn];
+int n, m, tot, head[maxn];
+int c[maxn];
+
+void add(int u, int v){
+    s[++ tot].to = v;
+    s[tot].next = head[u];
+    head[u] = tot;
+}
+
+bool dfs(int a, int b){
+    c[a] = b;
+    for(int i = head[a]; ~i; i = s[i].next){
+        int to = s[i].to;
+        if(c[to] == b)return false;
+        if(c[to] == 0 && !dfs(to, -b))return false;
+    }
+    return true;
+}
+
+bool init(){
+    memset(c, 0, sizeof c);
+    memset(head, -1, sizeof head);
+    scanf("%d%d", &n, &m);
+    for(int i = 1; i <= m; i ++){
+        int a, b;
+        scanf("%d%d", &a, &b);
+        add(a, b), add(b, a);
+    }    
+    int flag = dfs(1, 1);
+    if(n & 1)flag = false;
+    return flag;//true为真
+}
