@@ -1,0 +1,17 @@
+using ll = long long;
+const int Q= (1 << 24) + 1;
+static char buf[Q],*pa=buf,*pd=buf;
+#define gc pa==pd&&(pd=(pa=buf)+fread(buf,1,Q,stdin),pa==pd)?EOF:*pa++
+inline ll read1(){
+    register ll x(0); register char c(gc);
+    while(c < '0' || c > '9')c = gc;
+    while(c >= '0' && c <= '9')x = (x << 1) + (x << 3) + (c ^ 48), c = gc;
+    return x;
+}
+
+inline int read(){
+	register int x = 0, f = 1; register char c = getchar();
+	while(c < '0' || c > '9') {if(c == '-') f = -1; c = getchar();}
+	while(c >= '0' && c <= '9') x = (x << 3) + (x << 1) + (c ^ 48), c = getchar();
+	return x * f;
+}
